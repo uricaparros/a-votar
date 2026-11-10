@@ -67,8 +67,8 @@
   .room-code-val { font-family: 'Syne', monospace; font-size: 2rem; font-weight: 800; color: var(--accent); letter-spacing: .15em; flex: 1; text-align: center; }
   .copy-btn { background: none; border: none; cursor: pointer; padding: 4px; color: var(--accent); opacity: .7; transition: opacity .15s; }
   .copy-btn:hover { opacity: 1; }
-  .counter-ring { display: flex; flex-direction: column; align-items: center; padding: 20px; gap: 4px; }
-  .counter-num { font-family: 'Syne', sans-serif; font-size: 3rem; font-weight: 800; color: var(--accent); line-height: 1; }
+  .counter-ring { display: flex; flex-direction: column; align-items: center; padding: 16px; gap: 4px; }
+  .counter-num { font-family: 'Syne', sans-serif; font-size: 2.5rem; font-weight: 800; color: var(--accent); line-height: 1; }
   .counter-of { font-size: .9rem; color: var(--fg-muted); font-weight: 500; text-align: center; }
   .responses-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-top: 16px; }
   .response-card { background: var(--accent-bg); border: 1.5px solid color-mix(in srgb, var(--accent) 25%, transparent); border-radius: 10px; padding: 12px 14px; }
@@ -118,6 +118,10 @@
         <label for="inp-question">Pregunta</label>
         <textarea id="inp-question" placeholder="On sopem avui?" rows="2"></textarea>
       </div>
+      <div class="field" id="field-creator-name">
+        <label for="inp-creator-name">El teu nom</label>
+        <input type="text" id="inp-creator-name" placeholder="Ex: Oriol">
+      </div>
       <div class="field">
         <label class="checkbox-label">
           <input type="checkbox" id="inp-hide-names" checked>
@@ -158,17 +162,36 @@
     <div class="card">
       <div class="question-display" id="creator-question"></div>
 
-      <div id="creator-state-waiting">
-        <div class="counter-ring">
+      <!-- El creador també pot enviar la seva proposta -->
+      <div id="creator-state-form">
+        <div class="field">
+          <label for="inp-creator-proposal">La teva opció</label>
+          <textarea id="inp-creator-proposal" placeholder="Escriu la teva opció..." rows="3"></textarea>
+        </div>
+        <button class="btn btn-primary" id="btn-submit-creator-proposal" style="margin-top:16px">Enviar proposta</button>
+      </div>
+
+      <div id="creator-state-submitted" style="display:none">
+        <div class="submitted-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+        <div class="text-center" style="margin-bottom:16px">
+          <div style="font-weight:700;font-size:1.1rem;margin-bottom:4px">¡Proposta enviada!</div>
+          <div class="text-muted">Pots revelar quan vulguis o esperar tothom.</div>
+        </div>
+        
+        <div class="counter-ring" style="background:var(--bg);border-radius:10px;margin-bottom:16px">
           <div class="counter-num" id="counter-submitted">0</div>
           <div class="counter-of" id="counter-of-label">persones han respost</div>
         </div>
-        <button class="btn btn-success" id="btn-reveal" disabled style="margin-top:12px">Revelar propostes</button>
+
+        <button class="btn btn-success" id="btn-reveal" disabled>Revelar propostes</button>
       </div>
 
       <div id="creator-state-revealed" style="display:none">
         <div class="notice-ok">¡Propostes revelades!</div>
         <div class="responses-grid" id="creator-responses-grid"></div>
+        <button class="btn btn-ghost mt-4" id="btn-new-vote-creator" style="margin-top:16px">Nova votació</button>
       </div>
     </div>
 
@@ -285,11 +308,22 @@
   function roomDoc(code) { return doc(db, 'rooms', code); }
   function participantsCol(code) { return collection(db, 'rooms', code, 'participants'); }
 
+  // Toggle creator name input visibility based on checkbox
+  $('inp-hide-names').addEventListener('change', function() {
+    if (this.checked) {
+      hide('field-creator-name');
+    } else {
+      show('field-creator-name');
+    }
+  });
+
   $('btn-create').addEventListener('click', async () => {
     const question = $('inp-question').value.trim();
     if (!question) { $('inp-question').focus(); return; }
     
     hideNames = $('inp-hide-names').checked;
+    const creatorName = hideNames ? 'Creador' : ($('inp-creator-name').value.trim() || 'Creador');
+
     roomCode = genCode();
     myRole = 'creator';
 
@@ -304,7 +338,7 @@
         createdAt: Date.now()
       });
       await setDoc(doc(participantsCol(roomCode), myId), {
-        name: 'Creador',
+        name: creatorName,
         isCreator: true,
         submitted: false,
         joinedAt: Date.now()
@@ -313,7 +347,8 @@
       $('display-code').textContent = roomCode;
       $('creator-question').textContent = question;
       hide('creator-state-revealed');
-      show('creator-state-waiting');
+      hide('creator-state-submitted');
+      show('creator-state-form');
 
       if (!hideNames) show('card-participants');
       else hide('card-participants');
@@ -405,6 +440,31 @@
     }
   });
 
+  // Creator submit proposal
+  $('btn-submit-creator-proposal').addEventListener('click', async () => {
+    const proposal = $('inp-creator-proposal').value.trim();
+    if (!proposal) { $('inp-creator-proposal').focus(); return; }
+
+    $('btn-submit-creator-proposal').disabled = true;
+    $('btn-submit-creator-proposal').innerHTML = '<span class="spinner"></span> Enviant…';
+
+    try {
+      await updateDoc(doc(participantsCol(roomCode), myId), {
+        submitted: true,
+        proposal: proposal,
+        submittedAt: Date.now()
+      });
+      hide('creator-state-form');
+      show('creator-state-submitted');
+    } catch(e) {
+      console.error(e);
+      alert('Error en enviar.');
+      $('btn-submit-creator-proposal').disabled = false;
+      $('btn-submit-creator-proposal').textContent = 'Enviar proposta';
+    }
+  });
+
+  // Participant submit proposal
   $('btn-submit-proposal').addEventListener('click', async () => {
     const proposal = $('inp-proposal').value.trim();
     if (!proposal) { $('inp-proposal').focus(); return; }
@@ -475,37 +535,47 @@
     try {
       const snap = await getDocs(participantsCol(code));
       const participants = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      const gridId = (myRole === 'creator') ? 'creator-responses-grid' : 'revealed-responses-grid';
       
       const responses = participants.filter(p => p.proposal);
-      const grid = $(gridId);
       
-      grid.innerHTML = responses.map((p, i) => `
-        <div class="response-card">
-          <div class="response-text">${escapeHtml(p.proposal)}</div>
-          <div class="response-idx">Opció ${i + 1}</div>
-        </div>
-      `).join('');
-
       if (myRole === 'creator') {
-        hide('creator-state-waiting');
+        const grid = $('creator-responses-grid');
+        grid.innerHTML = responses.map((p, i) => `
+          <div class="response-card">
+            <div class="response-text">${escapeHtml(p.proposal)}</div>
+            <div class="response-idx">Opció ${i + 1}</div>
+          </div>
+        `).join('');
+        hide('creator-state-form');
+        hide('creator-state-submitted');
         show('creator-state-revealed');
       } else {
+        const grid = $('revealed-responses-grid');
+        grid.innerHTML = responses.map((p, i) => `
+          <div class="response-card">
+            <div class="response-text">${escapeHtml(p.proposal)}</div>
+            <div class="response-idx">Opció ${i + 1}</div>
+          </div>
+        `).join('');
         $('revealed-question-banner').textContent = roomData.question || '';
         screen('revealed');
       }
     } catch(e) {}
   }
 
-  $('btn-new-vote').addEventListener('click', () => {
+  const resetApp = () => {
     cleanupSubs();
     roomCode = null;
     myRole = null;
     $('inp-question').value = '';
     $('inp-code').value = '';
     $('inp-proposal').value = '';
+    $('inp-creator-proposal').value = '';
     screen('home');
-  });
+  };
+
+  $('btn-new-vote').addEventListener('click', resetApp);
+  $('btn-new-vote-creator').addEventListener('click', resetApp);
 
   function cleanupSubs() {
     unsubs.forEach(u => { try { u(); } catch(e) {} });
