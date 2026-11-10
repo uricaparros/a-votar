@@ -1,0 +1,517 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>A votar!</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@600;800&family=Inter:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg:       #f7f6f3;
+    --surface:  #ffffff;
+    --border:   #e5e3de;
+    --fg:       #1a1917;
+    --fg-muted: #7a7772;
+    --accent:   #2d5be3;
+    --accent-bg:#eef1fd;
+    --success:  #1a9e6a;
+    --warn:     #c8580a;
+    --radius:   14px;
+    --shadow:   0 2px 12px rgba(0,0,0,.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:       #131210;
+      --surface:  #1e1d1a;
+      --border:   #2f2e2b;
+      --fg:       #f0ede8;
+      --fg-muted: #807c77;
+      --accent:   #6b8df5;
+      --accent-bg:#1b2340;
+      --success:  #2fc98a;
+      --warn:     #f5833a;
+      --shadow:   0 2px 12px rgba(0,0,0,.35);
+      color-scheme: dark;
+    }
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font-family: 'Inter', system-ui, sans-serif; font-size: 16px; line-height: 1.5;
+    min-height: 100vh; display: flex; flex-direction: column;
+    padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  }
+  .app { max-width: 480px; width: 100%; margin: 0 auto; padding-block: 24px 48px; flex: 1; display: flex; flex-direction: column; }
+  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.5rem; color: var(--accent); letter-spacing: -0.02em; margin-bottom: 24px; display: flex; align-items: center; gap: 8px; }
+  .logo-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); display: inline-block; animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.4); opacity: .6; } }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); margin-bottom: 16px; }
+  .card-title { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700; margin: 0 0 16px; }
+  label { display: block; font-size: .8rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--fg-muted); margin-bottom: 6px; }
+  input[type="text"], textarea { width: 100%; padding: 12px 14px; background: var(--bg); border: 1.5px solid var(--border); border-radius: 10px; color: var(--fg); font-family: inherit; font-size: 1rem; outline: none; transition: border-color .15s; resize: none; }
+  input[type="text"]:focus, textarea:focus { border-color: var(--accent); background: var(--surface); }
+  textarea { min-height: 80px; }
+  .checkbox-label { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; font-weight: 500; color: var(--fg); text-transform: none; letter-spacing: normal; cursor: pointer; margin-top: 12px; }
+  .checkbox-label input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px 20px; border: none; border-radius: 10px; font-family: 'Inter', sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform .1s, opacity .15s; }
+  .btn:active { transform: scale(.97); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover:not(:disabled) { opacity: .9; }
+  .btn-ghost { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
+  .btn-success { background: var(--success); color: #fff; }
+  .field { margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+  .room-code-wrap { display: flex; align-items: center; gap: 10px; background: var(--accent-bg); border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; }
+  .room-code-label { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--accent); white-space: nowrap; }
+  .room-code-val { font-family: 'Syne', monospace; font-size: 2rem; font-weight: 800; color: var(--accent); letter-spacing: .15em; flex: 1; text-align: center; }
+  .copy-btn { background: none; border: none; cursor: pointer; padding: 4px; color: var(--accent); opacity: .7; transition: opacity .15s; }
+  .copy-btn:hover { opacity: 1; }
+  .counter-ring { display: flex; flex-direction: column; align-items: center; padding: 20px; gap: 4px; }
+  .counter-num { font-family: 'Syne', sans-serif; font-size: 3rem; font-weight: 800; color: var(--accent); line-height: 1; }
+  .counter-of { font-size: .9rem; color: var(--fg-muted); font-weight: 500; text-align: center; }
+  .responses-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-top: 16px; }
+  .response-card { background: var(--accent-bg); border: 1.5px solid color-mix(in srgb, var(--accent) 25%, transparent); border-radius: 10px; padding: 12px 14px; }
+  .response-text { font-size: 1rem; font-weight: 500; color: var(--fg); word-break: break-word; }
+  .response-idx { font-size: .7rem; color: var(--fg-muted); margin-top: 4px; font-weight: 600; text-transform: uppercase; }
+  .notice-ok { background: color-mix(in srgb, var(--success) 12%, transparent); color: var(--success); padding: 12px 14px; border-radius: 10px; font-size: .9rem; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .peer-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: .9rem; color: var(--fg-muted); }
+  .peer-row:last-child { border-bottom: none; }
+  .peer-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); flex-shrink: 0; }
+  .peer-dot.pending { background: var(--warn); }
+  .divider { display: flex; align-items: center; gap: 10px; color: var(--fg-muted); font-size: .8rem; margin: 20px 0; font-weight: 500; text-transform: uppercase; letter-spacing: .05em; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .question-display { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 700; margin: 0 0 16px; line-height: 1.25; text-wrap: balance; }
+  .submitted-icon { display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50%; background: color-mix(in srgb, var(--success) 15%, transparent); margin: 0 auto 12px; color: var(--success); }
+  .text-muted { color: var(--fg-muted); font-size: .875rem; }
+  .text-center { text-align: center; }
+  #loading { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 100; transition: opacity .3s; }
+  #loading.fade { opacity: 0; pointer-events: none; }
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px">
+    <div class="spinner" style="width:28px;height:28px;border-width:3px"></div>
+    <div style="color:var(--fg-muted);font-size:.9rem">Connectant…</div>
+  </div>
+</div>
+
+<div class="app" id="app" style="display:none">
+
+  <!-- HOME SCREEN -->
+  <div class="screen active" id="screen-home">
+    <div class="logo"><span class="logo-dot"></span> A votar!</div>
+
+    <div class="card">
+      <div class="card-title">Crear sala</div>
+      <div class="field">
+        <label for="inp-question">Pregunta</label>
+        <textarea id="inp-question" placeholder="On sopem avui?" rows="2"></textarea>
+      </div>
+      <div class="field">
+        <label class="checkbox-label">
+          <input type="checkbox" id="inp-hide-names" checked>
+          Ocultar noms (totalment anònim)
+        </label>
+      </div>
+      <button class="btn btn-primary mt-4" id="btn-create" style="margin-top:16px">Crear sala</button>
+    </div>
+
+    <div class="divider">o uneix-te</div>
+
+    <div class="card">
+      <div class="card-title">Unir-se a una sala</div>
+      <div class="field">
+        <label for="inp-code">Codi (4 dígits)</label>
+        <input type="text" id="inp-code" placeholder="AB12" maxlength="4" style="text-transform:uppercase;letter-spacing:.2em;font-size:1.2rem;font-weight:700;text-align:center">
+      </div>
+      <div class="field" id="field-join-name">
+        <label for="inp-join-name">El teu nom</label>
+        <input type="text" id="inp-join-name" placeholder="Ex: Carlos">
+      </div>
+      <button class="btn btn-ghost mt-4" id="btn-join" style="margin-top:16px">Unir-se</button>
+    </div>
+  </div>
+
+  <!-- CREATOR LOBBY -->
+  <div class="screen" id="screen-creator">
+    <div class="logo"><span class="logo-dot"></span> A votar!</div>
+
+    <div class="room-code-wrap">
+      <span class="room-code-label">Codi</span>
+      <span class="room-code-val" id="display-code">----</span>
+      <button class="copy-btn" id="btn-copy-code" title="Copiar codi">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="question-display" id="creator-question"></div>
+
+      <div id="creator-state-waiting">
+        <div class="counter-ring">
+          <div class="counter-num" id="counter-submitted">0</div>
+          <div class="counter-of" id="counter-of-label">persones han respost</div>
+        </div>
+        <button class="btn btn-success" id="btn-reveal" disabled style="margin-top:12px">Revelar propostes</button>
+      </div>
+
+      <div id="creator-state-revealed" style="display:none">
+        <div class="notice-ok">¡Propostes revelades!</div>
+        <div class="responses-grid" id="creator-responses-grid"></div>
+      </div>
+    </div>
+
+    <div class="card" id="card-participants" style="display:none">
+      <div style="font-size:.8rem;font-weight:600;color:var(--fg-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Participants</div>
+      <div id="participants-list"></div>
+    </div>
+  </div>
+
+  <!-- PARTICIPANT SCREEN -->
+  <div class="screen" id="screen-participant">
+    <div class="logo"><span class="logo-dot"></span> A votar!</div>
+
+    <div class="card">
+      <div class="question-display" id="participant-question"></div>
+
+      <div id="participant-state-form">
+        <div class="field">
+          <label for="inp-proposal">La teva opció</label>
+          <textarea id="inp-proposal" placeholder="Escriu la teva opció..." rows="3"></textarea>
+        </div>
+        <button class="btn btn-primary" id="btn-submit-proposal" style="margin-top:16px">Enviar proposta</button>
+      </div>
+
+      <div id="participant-state-submitted" style="display:none">
+        <div class="submitted-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+        <div class="text-center">
+          <div style="font-weight:700;font-size:1.1rem;margin-bottom:4px">¡Enviat!</div>
+          <div class="text-muted">Esperant que el creador reveli els resultats...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="counter-ring" style="padding:4px">
+        <div class="counter-num" id="p-counter-submitted" style="font-size:2rem">0</div>
+        <div class="counter-of" id="p-counter-label">han respost</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REVEALED SCREEN (FOR PARTICIPANTS) -->
+  <div class="screen" id="screen-revealed">
+    <div class="logo"><span class="logo-dot"></span> A votar!</div>
+
+    <div class="card">
+      <div class="text-center" style="margin-bottom:16px">
+        <div style="font-size:1.8rem;margin-bottom:4px">🎉</div>
+        <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700">¡Resultats revelats!</div>
+        <div class="text-muted" id="revealed-question-banner" style="margin-top:4px"></div>
+      </div>
+      <div class="responses-grid" id="revealed-responses-grid"></div>
+    </div>
+
+    <button class="btn btn-ghost" id="btn-new-vote">Nova votació</button>
+  </div>
+
+</div>
+
+<!-- FIREBASE SDKs -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAr3HphMJL6bXrw7Lg-w_YANgely5jNntY",
+    authDomain: "a-votar.firebaseapp.com",
+    projectId: "a-votar",
+    storageBucket: "a-votar.firebasestorage.app",
+    messagingSenderId: "859039695650",
+    appId: "1:859039695650:web:16bca6db4aa0c0f04f5b7b",
+    measurementId: "G-HTY54QTGWS"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  function $(id) { return document.getElementById(id); }
+  function show(id) { $(id).style.display = ''; }
+  function hide(id) { $(id).style.display = 'none'; }
+  function screen(name) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    $('screen-' + name).classList.add('active');
+  }
+
+  function genCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    return Array.from({length: 4}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  }
+
+  function normalizeCode(s) {
+    return (s || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+  }
+
+  let myId = localStorage.getItem('avotar_id');
+  if (!myId) {
+    myId = 'anon_' + Math.random().toString(36).slice(2, 11);
+    localStorage.setItem('avotar_id', myId);
+  }
+
+  let myRole = null;
+  let roomCode = null;
+  let hideNames = true;
+  const unsubs = [];
+
+  setTimeout(() => {
+    $('loading').classList.add('fade');
+    setTimeout(() => { $('loading').style.display = 'none'; }, 300);
+    $('app').style.display = 'flex';
+  }, 200);
+
+  function roomDoc(code) { return doc(db, 'rooms', code); }
+  function participantsCol(code) { return collection(db, 'rooms', code, 'participants'); }
+
+  $('btn-create').addEventListener('click', async () => {
+    const question = $('inp-question').value.trim();
+    if (!question) { $('inp-question').focus(); return; }
+    
+    hideNames = $('inp-hide-names').checked;
+    roomCode = genCode();
+    myRole = 'creator';
+
+    $('btn-create').disabled = true;
+    $('btn-create').innerHTML = '<span class="spinner"></span> Creant…';
+
+    try {
+      await setDoc(roomDoc(roomCode), {
+        question,
+        hideNames,
+        revealed: false,
+        createdAt: Date.now()
+      });
+      await setDoc(doc(participantsCol(roomCode), myId), {
+        name: 'Creador',
+        isCreator: true,
+        submitted: false,
+        joinedAt: Date.now()
+      });
+
+      $('display-code').textContent = roomCode;
+      $('creator-question').textContent = question;
+      hide('creator-state-revealed');
+      show('creator-state-waiting');
+
+      if (!hideNames) show('card-participants');
+      else hide('card-participants');
+
+      cleanupSubs();
+      subscribeToRoom(roomCode);
+      screen('creator');
+    } catch(e) {
+      console.error(e);
+      alert('Error en crear la sala.');
+    } finally {
+      $('btn-create').disabled = false;
+      $('btn-create').textContent = 'Crear sala';
+    }
+  });
+
+  $('btn-copy-code').addEventListener('click', () => {
+    navigator.clipboard.writeText(roomCode || '').then(() => {
+      $('btn-copy-code').style.color = 'var(--success)';
+      setTimeout(() => { $('btn-copy-code').style.color = ''; }, 1000);
+    });
+  });
+
+  $('inp-code').addEventListener('input', async function() {
+    const code = normalizeCode(this.value);
+    this.value = code;
+    if (code.length === 4) {
+      try {
+        const snap = await getDoc(roomDoc(code));
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data.hideNames) {
+            hide('field-join-name');
+          } else {
+            show('field-join-name');
+          }
+        }
+      } catch(e) {}
+    }
+  });
+
+  $('btn-join').addEventListener('click', async () => {
+    const code = normalizeCode($('inp-code').value);
+    if (code.length < 4) { $('inp-code').focus(); return; }
+
+    $('btn-join').disabled = true;
+    $('btn-join').innerHTML = '<span class="spinner"></span> Unint-se…';
+
+    try {
+      const snap = await getDoc(roomDoc(code));
+      if (!snap.exists()) {
+        alert('Sala no trobada.');
+        $('btn-join').disabled = false;
+        $('btn-join').textContent = 'Unir-se';
+        return;
+      }
+      const data = snap.data();
+      roomCode = code;
+      hideNames = !!data.hideNames;
+      myRole = 'participant';
+
+      const joinName = hideNames ? 'Participant' : ($('inp-join-name').value.trim() || 'Participant');
+
+      if (data.revealed) {
+        loadRevealedScreen(code, data);
+        return;
+      }
+
+      await setDoc(doc(participantsCol(code), myId), {
+        name: joinName,
+        isCreator: false,
+        submitted: false,
+        joinedAt: Date.now()
+      });
+
+      $('participant-question').textContent = data.question || '';
+      show('participant-state-form');
+      hide('participant-state-submitted');
+
+      cleanupSubs();
+      subscribeToRoom(code);
+      screen('participant');
+    } catch(e) {
+      console.error(e);
+      alert('Error en unir-se.');
+    } finally {
+      $('btn-join').disabled = false;
+      $('btn-join').textContent = 'Unir-se';
+    }
+  });
+
+  $('btn-submit-proposal').addEventListener('click', async () => {
+    const proposal = $('inp-proposal').value.trim();
+    if (!proposal) { $('inp-proposal').focus(); return; }
+
+    $('btn-submit-proposal').disabled = true;
+    $('btn-submit-proposal').innerHTML = '<span class="spinner"></span> Enviant…';
+
+    try {
+      await updateDoc(doc(participantsCol(roomCode), myId), {
+        submitted: true,
+        proposal: proposal,
+        submittedAt: Date.now()
+      });
+      hide('participant-state-form');
+      show('participant-state-submitted');
+    } catch(e) {
+      console.error(e);
+      alert('Error en enviar.');
+      $('btn-submit-proposal').disabled = false;
+      $('btn-submit-proposal').textContent = 'Enviar proposta';
+    }
+  });
+
+  $('btn-reveal').addEventListener('click', async () => {
+    $('btn-reveal').disabled = true;
+    try {
+      await updateDoc(roomDoc(roomCode), { revealed: true });
+    } catch(e) {
+      console.error(e);
+    }
+  });
+
+  function subscribeToRoom(code) {
+    unsubs.push(onSnapshot(roomDoc(code), snap => {
+      if (!snap.exists()) return;
+      const data = snap.data();
+      if (data.revealed) {
+        loadRevealedScreen(code, data);
+      }
+    }));
+
+    unsubs.push(onSnapshot(participantsCol(code), snap => {
+      const participants = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const total = participants.length;
+      const submittedCount = participants.filter(p => p.submitted).length;
+
+      $('counter-submitted').textContent = submittedCount;
+      $('counter-of-label').textContent = `de ${total} han respost`;
+      $('btn-reveal').disabled = submittedCount === 0;
+
+      $('p-counter-submitted').textContent = submittedCount;
+      $('p-counter-label').textContent = `${submittedCount} de ${total} han respost`;
+
+      if (!hideNames) {
+        const list = $('participants-list');
+        list.innerHTML = participants.map(p => `
+          <div class="peer-row">
+            <div class="peer-dot ${p.submitted ? '' : 'pending'}"></div>
+            <span>${escapeHtml(p.name)}</span>
+            <span style="margin-left:auto;font-size:.75rem;color:${p.submitted ? 'var(--success)' : 'var(--fg-muted)'}">${p.submitted ? '✓ llest' : 'esperant...'}</span>
+          </div>
+        `).join('');
+      }
+    }));
+  }
+
+  async function loadRevealedScreen(code, roomData) {
+    try {
+      const snap = await getDocs(participantsCol(code));
+      const participants = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const gridId = (myRole === 'creator') ? 'creator-responses-grid' : 'revealed-responses-grid';
+      
+      const responses = participants.filter(p => p.proposal);
+      const grid = $(gridId);
+      
+      grid.innerHTML = responses.map((p, i) => `
+        <div class="response-card">
+          <div class="response-text">${escapeHtml(p.proposal)}</div>
+          <div class="response-idx">Opció ${i + 1}</div>
+        </div>
+      `).join('');
+
+      if (myRole === 'creator') {
+        hide('creator-state-waiting');
+        show('creator-state-revealed');
+      } else {
+        $('revealed-question-banner').textContent = roomData.question || '';
+        screen('revealed');
+      }
+    } catch(e) {}
+  }
+
+  $('btn-new-vote').addEventListener('click', () => {
+    cleanupSubs();
+    roomCode = null;
+    myRole = null;
+    $('inp-question').value = '';
+    $('inp-code').value = '';
+    $('inp-proposal').value = '';
+    screen('home');
+  });
+
+  function cleanupSubs() {
+    unsubs.forEach(u => { try { u(); } catch(e) {} });
+    unsubs.length = 0;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+
+</body>
+</html>
