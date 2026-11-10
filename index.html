@@ -92,10 +92,6 @@
   #loading { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 100; transition: opacity .3s; }
   #loading.fade { opacity: 0; pointer-events: none; }
 </style>
-  <!-- Icono para el navegador (pestaña) -->
-<link rel="icon" href="icono.png" type="image/png">
-<!-- Icono para añadir a pantalla de inicio en iOS -->
-<link rel="apple-touch-icon" href="icono.png">
 </head>
 <body>
 
@@ -118,7 +114,7 @@
         <label for="inp-question">Pregunta</label>
         <textarea id="inp-question" placeholder="On sopem avui?" rows="2"></textarea>
       </div>
-      <div class="field" id="field-creator-name">
+      <div class="field" id="field-creator-name" style="display:none">
         <label for="inp-creator-name">El teu nom</label>
         <input type="text" id="inp-creator-name" placeholder="Ex: Oriol">
       </div>
@@ -162,7 +158,6 @@
     <div class="card">
       <div class="question-display" id="creator-question"></div>
 
-      <!-- El creador també pot enviar la seva proposta -->
       <div id="creator-state-form">
         <div class="field">
           <label for="inp-creator-proposal">La teva opció</label>
@@ -177,7 +172,7 @@
         </div>
         <div class="text-center" style="margin-bottom:16px">
           <div style="font-weight:700;font-size:1.1rem;margin-bottom:4px">¡Proposta enviada!</div>
-          <div class="text-muted">Pots revelar quan vulguis o esperar tothom.</div>
+          <div class="text-muted">Pots esperar tothom o revelar ja.</div>
         </div>
         
         <div class="counter-ring" style="background:var(--bg);border-radius:10px;margin-bottom:16px">
@@ -308,7 +303,6 @@
   function roomDoc(code) { return doc(db, 'rooms', code); }
   function participantsCol(code) { return collection(db, 'rooms', code, 'participants'); }
 
-  // Toggle creator name input visibility based on checkbox
   $('inp-hide-names').addEventListener('change', function() {
     if (this.checked) {
       hide('field-creator-name');
@@ -350,8 +344,12 @@
       hide('creator-state-submitted');
       show('creator-state-form');
 
-      if (!hideNames) show('card-participants');
-      else hide('card-participants');
+      if (!hideNames) {
+        show('card-participants');
+        hide('field-join-name');
+      } else {
+        hide('card-participants');
+      }
 
       cleanupSubs();
       subscribeToRoom(roomCode);
@@ -440,7 +438,6 @@
     }
   });
 
-  // Creator submit proposal
   $('btn-submit-creator-proposal').addEventListener('click', async () => {
     const proposal = $('inp-creator-proposal').value.trim();
     if (!proposal) { $('inp-creator-proposal').focus(); return; }
@@ -464,7 +461,6 @@
     }
   });
 
-  // Participant submit proposal
   $('btn-submit-proposal').addEventListener('click', async () => {
     const proposal = $('inp-proposal').value.trim();
     if (!proposal) { $('inp-proposal').focus(); return; }
@@ -520,13 +516,13 @@
 
       if (!hideNames) {
         const list = $('participants-list');
-        list.innerHTML = participants.map(p => `
+        list.innerHTML = participants.p ? participants.map(p => `
           <div class="peer-row">
             <div class="peer-dot ${p.submitted ? '' : 'pending'}"></div>
             <span>${escapeHtml(p.name)}</span>
             <span style="margin-left:auto;font-size:.75rem;color:${p.submitted ? 'var(--success)' : 'var(--fg-muted)'}">${p.submitted ? '✓ llest' : 'esperant...'}</span>
           </div>
-        `).join('');
+        `).join('') : '';
       }
     }));
   }
@@ -538,29 +534,28 @@
       
       const responses = participants.filter(p => p.proposal);
       
-      if (myRole === 'creator') {
-        const grid = $('creator-responses-grid');
-        grid.innerHTML = responses.map((p, i) => `
+      // Si "Ocultar noms" està activat, mostramos "Opció 1", "Opció 2"... 
+      // Si está desmarcado, mostramos el nombre de quién lo ha puesto ("Carlos", "Oriol"...)
+      const renderCards = (list) => {
+        return list.map((p, i) => `
           <div class="response-card">
             <div class="response-text">${escapeHtml(p.proposal)}</div>
-            <div class="response-idx">Opció ${i + 1}</div>
+            <div class="response-idx">${hideNames ? ('Opció ' + (i + 1)) : escapeHtml(p.name)}</div>
           </div>
         `).join('');
+      };
+      
+      if (myRole === 'creator') {
+        $('creator-responses-grid').innerHTML = renderCards(responses);
         hide('creator-state-form');
         hide('creator-state-submitted');
         show('creator-state-revealed');
       } else {
-        const grid = $('revealed-responses-grid');
-        grid.innerHTML = responses.map((p, i) => `
-          <div class="response-card">
-            <div class="response-text">${escapeHtml(p.proposal)}</div>
-            <div class="response-idx">Opció ${i + 1}</div>
-          </div>
-        `).join('');
+        $('revealed-responses-grid').innerHTML = renderCards(responses);
         $('revealed-question-banner').textContent = roomData.question || '';
         screen('revealed');
       }
-    } catch(e) {}
+    } czyn(e) {}
   }
 
   const resetApp = () => {
