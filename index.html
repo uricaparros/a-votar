@@ -69,18 +69,11 @@
   .room-code-val { font-family: 'Syne', monospace; font-size: 2rem; font-weight: 800; color: var(--accent); letter-spacing: .15em; flex: 1; text-align: center; }
   .copy-btn { background: none; border: none; cursor: pointer; padding: 4px; color: var(--accent); opacity: .7; transition: opacity .15s; }
   .copy-btn:hover { opacity: 1; }
-  .counter-ring { display: flex; flex-direction: column; align-items: center; padding: 16px; gap: 4px; }
-  .counter-num { font-family: 'Syne', sans-serif; font-size: 2.5rem; font-weight: 800; color: var(--accent); line-height: 1; }
-  .counter-of { font-size: .9rem; color: var(--fg-muted); font-weight: 500; text-align: center; }
   .responses-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-top: 16px; }
   .response-card { background: var(--accent-bg); border: 1.5px solid color-mix(in srgb, var(--accent) 25%, transparent); border-radius: 10px; padding: 12px 14px; }
   .response-text { font-size: 1rem; font-weight: 500; color: var(--fg); word-break: break-word; }
   .response-idx { font-size: .7rem; color: var(--fg-muted); margin-top: 4px; font-weight: 600; text-transform: uppercase; }
   .notice-ok { background: color-mix(in srgb, var(--success) 12%, transparent); color: var(--success); padding: 12px 14px; border-radius: 10px; font-size: .9rem; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-  .peer-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: .9rem; color: var(--fg-muted); }
-  .peer-row:last-child { border-bottom: none; }
-  .peer-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); flex-shrink: 0; }
-  .peer-dot.pending { background: var(--warn); }
   .divider { display: flex; align-items: center; gap: 10px; color: var(--fg-muted); font-size: .8rem; margin: 20px 0; font-weight: 500; text-transform: uppercase; letter-spacing: .05em; }
   .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
   .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
@@ -91,20 +84,11 @@
   .submitted-icon { display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50%; background: color-mix(in srgb, var(--success) 15%, transparent); margin: 0 auto 12px; color: var(--success); }
   .text-muted { color: var(--fg-muted); font-size: .875rem; }
   .text-center { text-align: center; }
-  #loading { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 100; transition: opacity .3s; }
-  #loading.fade { opacity: 0; pointer-events: none; }
 </style>
 </head>
 <body>
 
-<div id="loading">
-  <div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px">
-    <div class="spinner" style="width:28px;height:28px;border-width:3px"></div>
-    <div style="color:var(--fg-muted);font-size:.9rem">Connectant…</div>
-  </div>
-</div>
-
-<div class="app" id="app" style="display:none">
+<div class="app" id="app">
 
   <!-- HOME SCREEN -->
   <div class="screen active" id="screen-home">
@@ -174,15 +158,9 @@
         </div>
         <div class="text-center" style="margin-bottom:16px">
           <div style="font-weight:700;font-size:1.1rem;margin-bottom:4px">¡Proposta enviada!</div>
-          <div class="text-muted">Pots esperar tothom o revelar ja.</div>
+          <div class="text-muted">Prem quan vulguis per revelar a tothom.</div>
         </div>
-        
-        <div class="counter-ring" style="background:var(--bg);border-radius:10px;margin-bottom:16px">
-          <div class="counter-num" id="counter-submitted">0</div>
-          <div class="counter-of" id="counter-of-label">persones han respost</div>
-        </div>
-
-        <button class="btn btn-success" id="btn-reveal" disabled>Revelar propostes</button>
+        <button class="btn btn-success" id="btn-reveal" style="margin-top:16px">Revelar propostes</button>
       </div>
 
       <div id="creator-state-revealed" style="display:none">
@@ -190,11 +168,6 @@
         <div class="responses-grid" id="creator-responses-grid"></div>
         <button class="btn btn-ghost mt-4" id="btn-new-vote-creator" style="margin-top:16px">Nova votació</button>
       </div>
-    </div>
-
-    <div class="card" id="card-participants" style="display:none">
-      <div style="font-size:.8rem;font-weight:600;color:var(--fg-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Participants</div>
-      <div id="participants-list"></div>
     </div>
   </div>
 
@@ -223,13 +196,6 @@
         </div>
       </div>
     </div>
-
-    <div class="card">
-      <div class="counter-ring" style="padding:4px">
-        <div class="counter-num" id="p-counter-submitted" style="font-size:2rem">0</div>
-        <div class="counter-of" id="p-counter-label">han respost</div>
-      </div>
-    </div>
   </div>
 
   <!-- REVEALED SCREEN (FOR PARTICIPANTS) -->
@@ -250,24 +216,7 @@
 
 </div>
 
-<!-- FIREBASE SDKs -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyAr3HphMJL6bXrw7Lg-w_YANgely5jNntY",
-    authDomain: "a-votar.firebaseapp.com",
-    projectId: "a-votar",
-    storageBucket: "a-votar.firebasestorage.app",
-    messagingSenderId: "859039695650",
-    appId: "1:859039695650:web:16bca6db4aa0c0f04f5b7b",
-    measurementId: "G-HTY54QTGWS"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
+<script>
   function $(id) { return document.getElementById(id); }
   function show(id) { $(id).style.display = ''; }
   function hide(id) { $(id).style.display = 'none'; }
@@ -285,25 +234,9 @@
     return (s || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
   }
 
-  let myId = localStorage.getItem('avotar_id');
-  if (!myId) {
-    myId = 'anon_' + Math.random().toString(36).slice(2, 11);
-    localStorage.setItem('avotar_id', myId);
-  }
-
-  let myRole = null;
   let roomCode = null;
+  let myRole = null;
   let hideNames = true;
-  const unsubs = [];
-
-  setTimeout(() => {
-    $('loading').classList.add('fade');
-    setTimeout(() => { $('loading').style.display = 'none'; }, 300);
-    $('app').style.display = 'flex';
-  }, 200);
-
-  function roomDoc(code) { return doc(db, 'rooms', code); }
-  function participantsCol(code) { return collection(db, 'rooms', code, 'participants'); }
 
   $('inp-hide-names').addEventListener('change', function() {
     if (this.checked) {
@@ -313,56 +246,31 @@
     }
   });
 
-  $('btn-create').addEventListener('click', async () => {
+  // Crear sala
+  $('btn-create').addEventListener('click', () => {
     const question = $('inp-question').value.trim();
     if (!question) { $('inp-question').focus(); return; }
-    
+
     hideNames = $('inp-hide-names').checked;
     const creatorName = hideNames ? 'Creador' : ($('inp-creator-name').value.trim() || 'Creador');
-
     roomCode = genCode();
     myRole = 'creator';
 
-    $('btn-create').disabled = true;
-    $('btn-create').innerHTML = '<span class="spinner"></span> Creant…';
+    const roomData = {
+      question,
+      hideNames,
+      revealed: false,
+      participants: [{ id: 'creator', name: creatorName, proposal: '', submitted: false }]
+    };
 
-    try {
-      await setDoc(roomDoc(roomCode), {
-        question,
-        hideNames,
-        revealed: false,
-        createdAt: Date.now()
-      });
-      await setDoc(doc(participantsCol(roomCode), myId), {
-        name: creatorName,
-        isCreator: true,
-        submitted: false,
-        joinedAt: Date.now()
-      });
+    localStorage.setItem('room_' + roomCode, JSON.stringify(roomData));
 
-      $('display-code').textContent = roomCode;
-      $('creator-question').textContent = question;
-      hide('creator-state-revealed');
-      hide('creator-state-submitted');
-      show('creator-state-form');
-
-      if (!hideNames) {
-        show('card-participants');
-        hide('field-join-name');
-      } else {
-        hide('card-participants');
-      }
-
-      cleanupSubs();
-      subscribeToRoom(roomCode);
-      screen('creator');
-    } catch(e) {
-      console.error(e);
-      alert('Error en crear la sala.');
-    } finally {
-      $('btn-create').disabled = false;
-      $('btn-create').textContent = 'Crear sala';
-    }
+    $('display-code').textContent = roomCode;
+    $('creator-question').textContent = question;
+    hide('creator-state-revealed');
+    hide('creator-state-submitted');
+    show('creator-state-form');
+    screen('creator');
   });
 
   $('btn-copy-code').addEventListener('click', () => {
@@ -372,194 +280,130 @@
     });
   });
 
-  $('inp-code').addEventListener('input', async function() {
-    const code = normalizeCode(this.value);
-    this.value = code;
-    if (code.length === 4) {
+  $('inp-code').addEventListener('input', function() {
+    this.value = normalizeCode(this.value);
+    if (this.value.length === 4) {
       try {
-        const snap = await getDoc(roomDoc(code));
-        if (snap.exists()) {
-          const data = snap.data();
-          if (data.hideNames) {
-            hide('field-join-name');
-          } else {
-            show('field-join-name');
-          }
+        const raw = localStorage.getItem('room_' + this.value);
+        if (raw) {
+          const data = JSON.parse(raw);
+          if (data.hideNames) hide('field-join-name');
+          else show('field-join-name');
         }
       } catch(e) {}
     }
   });
 
-  $('btn-join').addEventListener('click', async () => {
+  // Unirse a sala
+  $('btn-join').addEventListener('click', () => {
     const code = normalizeCode($('inp-code').value);
     if (code.length < 4) { $('inp-code').focus(); return; }
 
-    $('btn-join').disabled = true;
-    $('btn-join').innerHTML = '<span class="spinner"></span> Unint-se…';
-
-    try {
-      const snap = await getDoc(roomDoc(code));
-      if (!snap.exists()) {
-        alert('Sala no trobada.');
-        $('btn-join').disabled = false;
-        $('btn-join').textContent = 'Unir-se';
-        return;
-      }
-      const data = snap.data();
-      roomCode = code;
-      hideNames = !!data.hideNames;
-      myRole = 'participant';
-
-      const joinName = hideNames ? 'Participant' : ($('inp-join-name').value.trim() || 'Participant');
-
-      if (data.revealed) {
-        loadRevealedScreen(code, data);
-        return;
-      }
-
-      await setDoc(doc(participantsCol(code), myId), {
-        name: joinName,
-        isCreator: false,
-        submitted: false,
-        joinedAt: Date.now()
-      });
-
-      $('participant-question').textContent = data.question || '';
-      show('participant-state-form');
-      hide('participant-state-submitted');
-
-      cleanupSubs();
-      subscribeToRoom(code);
-      screen('participant');
-    } catch(e) {
-      console.error(e);
-      alert('Error en unir-se.');
-    } finally {
-      $('btn-join').disabled = false;
-      $('btn-join').textContent = 'Unir-se';
+    const raw = localStorage.getItem('room_' + code);
+    if (!raw) {
+      alert('Sala no trobada en aquest dispositiu.');
+      return;
     }
+
+    const data = JSON.parse(raw);
+    if (data.revealed) {
+      alertệc('Aquesta votació ja s\'ha tancat.');
+      return;
+    }
+
+    roomCode = code;
+    hideNames = !!data.hideNames;
+    myRole = 'participant';
+
+    const joinName = hideNames ? 'Participant' : ($('inp-join-name').value.trim() || 'Participant');
+    
+    // Guardar participante temporal
+    window.myPartId = 'p_' + Math.random().toString(36).slice(2, 7);
+    data.participants.push({ id: window.myPartId, name: joinName, proposal: '', submitted: false });
+    localStorage.setItem('room_' + roomCode, JSON.stringify(data));
+
+    $('participant-question').textContent = data.question;
+    show('participant-state-form');
+    hide('participant-state-submitted');
+    screen('participant');
   });
 
-  $('btn-submit-creator-proposal').addEventListener('click', async () => {
-    const proposal = $('inp-creator-proposal').value.trim();
-    if (!proposal) { $('inp-creator-proposal').focus(); return; }
+  // Enviar propuesta creador
+  $('btn-submit-creator-proposal').addEventListener('click', () => {
+    const prop = $('inp-creator-proposal').value.trim();
+    if (!prop) { $('inp-creator-proposal').focus(); return; }
 
-    $('btn-submit-creator-proposal').disabled = true;
-    $('btn-submit-creator-proposal').innerHTML = '<span class="spinner"></span> Enviant…';
-
-    try {
-      await updateDoc(doc(participantsCol(roomCode), myId), {
-        submitted: true,
-        proposal: proposal,
-        submittedAt: Date.now()
-      });
-      hide('creator-state-form');
-      show('creator-state-submitted');
-    } catch(e) {
-      console.error(e);
-      alert('Error en enviar.');
-      $('btn-submit-creator-proposal').disabled = false;
-      $('btn-submit-creator-proposal').textContent = 'Enviar proposta';
+    const data = JSON.parse(localStorage.getItem('room_' + roomCode));
+    const creator = data.participants.find(p => p.id === 'creator');
+    if (creator) {
+      creator.proposal = prop;
+      creator.submitted = true;
     }
+    localStorage.setItem('room_' + roomCode, JSON.stringify(data));
+
+    hide('creator-state-form');
+    show('creator-state-submitted');
   });
 
-  $('btn-submit-proposal').addEventListener('click', async () => {
-    const proposal = $('inp-proposal').value.trim();
-    if (!proposal) { $('inp-proposal').focus(); return; }
+  // Enviar propuesta participante
+  $('btn-submit-proposal').addEventListener('click', () => {
+    const prop = $('inp-proposal').value.trim();
+    if (!prop) { $('inp-proposal').focus(); return; }
 
-    $('btn-submit-proposal').disabled = true;
-    $('btn-submit-proposal').innerHTML = '<span class="spinner"></span> Enviant…';
-
-    try {
-      await updateDoc(doc(participantsCol(roomCode), myId), {
-        submitted: true,
-        proposal: proposal,
-        submittedAt: Date.now()
-      });
-      hide('participant-state-form');
-      show('participant-state-submitted');
-    } catch(e) {
-      console.error(e);
-      alert('Error en enviar.');
-      $('btn-submit-proposal').disabled = false;
-      $('btn-submit-proposal').textContent = 'Enviar proposta';
+    const data = JSON.parse(localStorage.getItem('room_' + roomCode));
+    const p = data.participants.find(x => x.id === window.myPartId);
+    if (p) {
+      p.proposal = prop;
+      p.submitted = true;
     }
+    localStorage.setItem('room_' + roomCode, JSON.stringify(data));
+
+    hide('participant-state-form');
+    show('participant-state-submitted');
+
+    // Comprobación periódica para ver si el creador ha revelado
+    window.checkInterval = setInterval(() => {
+      const fresh = JSON.parse(localStorage.getItem('room_' + roomCode));
+      if (fresh && fresh.revealed) {
+        clearInterval(window.checkInterval);
+        loadRevealed(fresh);
+      }
+    }, 1000);
   });
 
-  $('btn-reveal').addEventListener('click', async () => {
-    $('btn-reveal').disabled = true;
-    try {
-      await updateDoc(roomDoc(roomCode), { revealed: true });
-    } catch(e) {
-      console.error(e);
-    }
+  // Revelar (Creador)
+  $('btn-reveal').addEventListener('click', () => {
+    const data = JSON.parse(localStorage.getItem('room_' + roomCode));
+    data.revealed = true;
+    localStorage.setItem('room_' + roomCode, JSON.stringify(data));
+
+    loadRevealed(data);
   });
 
-  function subscribeToRoom(code) {
-    unsubs.push(onSnapshot(roomDoc(code), snap => {
-      if (!snap.exists()) return;
-      const data = snap.data();
-      if (data.revealed) {
-        loadRevealedScreen(code, data);
-      }
-    }));
+  function loadRevealed(data) {
+    const responses = data.participants.filter(p => p.proposal);
+    const renderCards = (list) => {
+      return list.map((p, i) => `
+        <div class="response-card">
+          <div class="response-text">${escapeHtml(p.proposal)}</div>
+          <div class="response-idx">${data.hideNames ? ('Opció ' + (i + 1)) : escapeHtml(p.name)}</div>
+        </div>
+      `).join('');
+    };
 
-    unsubs.push(onSnapshot(participantsCol(code), snap => {
-      const participants = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      const total = participants.length;
-      const submittedCount = participants.filter(p => p.submitted).length;
-
-      $('counter-submitted').textContent = submittedCount;
-      $('counter-of-label').textContent = `de ${total} han respost`;
-      $('btn-reveal').disabled = submittedCount === 0;
-
-      $('p-counter-submitted').textContent = submittedCount;
-      $('p-counter-label').textContent = `${submittedCount} de ${total} han respost`;
-
-      if (!hideNames) {
-        const list = $('participants-list');
-        list.innerHTML = participants.map(p => `
-          <div class="peer-row">
-            <div class="peer-dot ${p.submitted ? '' : 'pending'}"></div>
-            <span>${escapeHtml(p.name)}</span>
-            <span style="margin-left:auto;font-size:.75rem;color:${p.submitted ? 'var(--success)' : 'var(--fg-muted)'}">${p.submitted ? '✓ llest' : 'esperant...'}</span>
-          </div>
-        `).join('');
-      }
-    }));
-  }
-
-  async function loadRevealedScreen(code, roomData) {
-    try {
-      const snap = await getDocs(participantsCol(code));
-      const participants = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      
-      const responses = participants.filter(p => p.proposal);
-      
-      const renderCards = (list) => {
-        return list.map((p, i) => `
-          <div class="response-card">
-            <div class="response-text">${escapeHtml(p.proposal)}</div>
-            <div class="response-idx">${hideNames ? ('Opció ' + (i + 1)) : escapeHtml(p.name)}</div>
-          </div>
-        `).join('');
-      };
-      
-      if (myRole === 'creator') {
-        $('creator-responses-grid').innerHTML = renderCards(responses);
-        hide('creator-state-form');
-        hide('creator-state-submitted');
-        show('creator-state-revealed');
-      } else {
-        $('revealed-responses-grid').innerHTML = renderCards(responses);
-        $('revealed-question-banner').textContent = roomData.question || '';
-        screen('revealed');
-      }
-    } catch(e) {}
+    if (myRole === 'creator') {
+      $('creator-responses-grid').innerHTML = renderCards(responses);
+      hide('creator-state-submitted');
+      show('creator-state-revealed');
+    } else {
+      $('revealed-responses-grid').innerHTML = renderCards(responses);
+      $('revealed-question-banner').textContent = data.question;
+      screen('revealed');
+    }
   }
 
   const resetApp = () => {
-    cleanupSubs();
+    if (window.checkInterval) clearInterval(window.checkInterval);
     roomCode = null;
     myRole = null;
     $('inp-question').value = '';
@@ -571,11 +415,6 @@
 
   $('btn-new-vote').addEventListener('click', resetApp);
   $('btn-new-vote-creator').addEventListener('click', resetApp);
-
-  function cleanupSubs() {
-    unsubs.forEach(u => { try { u(); } catch(e) {} });
-    unsubs.length = 0;
-  }
 
   function escapeHtml(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
